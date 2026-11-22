@@ -5,6 +5,68 @@
 ---
 
 <h3 align="center">iKalibr: Unified Targetless Spatiotemporal Calibration Framework</h3>
+
+## 本机 Docker 部署与 Robosense 标定记录
+
+本机操作文档入口：[部署与标定记录](/home/ros/lib/iKalibr/docs/mine/README.md)，包括 [Docker 构建](/home/ros/lib/iKalibr/docs/mine/docker-build.md)、[标定命令与结果](/home/ros/lib/iKalibr/docs/mine/calibration.md)、[内存问题与解决过程](/home/ros/lib/iKalibr/docs/mine/troubleshooting.md)。
+
+已完成 Robosense LiDAR–IMU 标定的配置是 `robosense-mapping-lowmem`：使用原始数据的 10 cm 点云降采样副本，保留逐点时间戳及全部 IMU 消息，时间段为 20–75 秒。运行上限为 4 CPU、12 GiB，求解线程为 4。基础镜像使用本机已有的 `osrf/ros:noetic-desktop-full`，运行镜像为 `ikalibr:noetic-local`。
+
+```bash
+cd /home/ros/lib/iKalibr
+
+IKALIBR_DATASETS=/home/ros/dataset/robosense \
+IKALIBR_RESULTS=/home/ros/dataset/robosense/ikalibr-results \
+./docker/run.sh calibrate-gui robosense-mapping-lowmem
+```
+
+启动时应确认 `BagPath: /datasets/mapping-voxel10cm.bag`。原始 bag 的 `robosense-mapping-extended` 配置曾在点面关联阶段耗尽内存。降采样副本的生成方法和无窗口命令见上述操作文档。
+
+### 最终外参：SE(3) 齐次变换矩阵
+
+以下为 2026-11-22 本次成功运行的最终结果，来源：
+
+```text
+/home/ros/dataset/robosense/ikalibr-results/robosense-mapping-lowmem/ikalibr_param.yaml
+```
+
+方向为 **LiDAR `/rslidar_points` → 参考 IMU `/rslidar_imu_data`**。采用列向量，平移单位为 **米**：
+
+```text
+T_IMU_LiDAR = [R, t; 0, 1] ∈ SE(3)
+
+T_IMU_LiDAR =
+[
+  [-0.0099056895, -0.9999508969,  0.0002847581, -0.0106995702],
+  [-0.9999498438,  0.0099060995,  0.0014761594, -0.0076077959],
+  [-0.0014789077, -0.0002701214, -0.9999988699, -0.0079221019],
+  [ 0.0000000000,  0.0000000000,  0.0000000000,  1.0000000000]
+]
+
+p_IMU = R * p_LiDAR + t
+[p_IMU; 1] = T_IMU_LiDAR * [p_LiDAR; 1]
+```
+
+矩阵由以下原始参数生成，四元数顺序为 `(qx, qy, qz, qw)`：
+
+```text
+q = (-0.703595601348132, 0.7106002144172402,
+      0.0004243025452270329, 0.0006204845551900097)
+t = (-0.01069957022759913, -0.00760779590277242, -0.007922101887971761) m
+```
+
+旋转满足 `R^T R ≈ I`、`det(R) ≈ 1`。显示矩阵已舍入，实际计算优先从原始四元数生成。若需要 **IMU → LiDAR**，使用逆矩阵 `T_LiDAR_IMU = [R^T, -R^T*t; 0, 1]`。
+
+时间偏移独立于 SE(3) 矩阵，本项目使用：
+
+```text
+t_reference_IMU = t_LiDAR + 0.01429440806010043 s
+```
+
+即 LiDAR 时间加约 **14.294 ms**。接入其他算法时需核对外参方向、四元数顺序和时间补偿符号。以上是最终计算结果，尚未经过独立精度验证，不能用初始化阶段打印的外参替代。
+
+---
+
 <p align="center">
     <a href="https://github.com/Unsigned-Long"><strong>Author » Shuolong Chen</strong></a>
 </p>
