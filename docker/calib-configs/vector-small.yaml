@@ -1,0 +1,58 @@
+Configor:
+  DataStream:
+    IMUTopics:
+    - key: /imu/data
+      value:
+        Type: SENSOR_IMU
+        Intrinsics: /opt/ikalibr_ws/src/ikalibr/config/imu-intri.yaml
+        AcceWeight: 17.68
+        GyroWeight: 57.66
+    RadarTopics: []
+    LiDARTopics: []
+    CameraTopics:
+    - key: /camera/left/image_mono
+      value:
+        Type: SENSOR_IMAGE_GS
+        Intrinsics: /configs/intrinsics/vector-small-cam0.yaml
+        Weight: 50.0
+        TrackLengthMin: 5
+        ScaleSplineType: LIN_POS_SPLINE
+    - key: /camera/right/image_mono
+      value:
+        Type: SENSOR_IMAGE_GS
+        Intrinsics: /configs/intrinsics/vector-small-cam1.yaml
+        Weight: 50.0
+        TrackLengthMin: 5
+        ScaleSplineType: LIN_POS_SPLINE
+    RGBDTopics: []
+    ReferIMU: /imu/data
+    BagPath: /datasets/VECtor/small_scale_camera_imu_extrinsic_data1.synced.bag
+    BeginTime: 1
+    Duration: -1
+    OutputPath: /results/vector-small
+  Prior:
+    GravityNorm: 9.8
+    SpatTempPrioriPath: ''
+    OptTemporalParams: true
+    TimeOffsetPadding: 0.1
+    ReadoutTimePadding: 0.01
+    MapDownSample: 0.05
+    KnotTimeDist:
+      SO3Spline: 0.05
+      ScaleSpline: 0.05
+    NDTLiDAROdometer:
+      Resolution: 0.5
+      KeyFrameDownSample: 0.1
+    LiDARDataAssociate:
+      MapDownSample: 0.05
+      PointToSurfelMax: 0.1
+      PlanarityMin: 0.6
+  Preference:
+    UseCudaInSolving: false
+    Outputs:
+    - BSplines
+    - AlignedInertialMes
+    OutputDataFormat: YAML
+    ThreadsToUse: 4
+    SplineScaleInViewer: 3.0
+    CoordSScaleInViewer: 0.3

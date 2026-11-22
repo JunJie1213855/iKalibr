@@ -1,0 +1,20 @@
+Intrinsics:
+  polymorphic_id: 2147483649
+  polymorphic_name: pinhole_brown_t2
+  ptr_wrapper:
+    id: 2147483649
+    data:
+      img_width: 1224
+      img_height: 1024
+      focal_length:
+      - 887.804282
+      - 888.04815
+      principal_point:
+      - 616.177573
+      - 514.712952
+      disto_param:
+      - -0.311523
+      - 0.09641
+      - 0.0
+      - 0.000623
+      - -0.000375

@@ -1,0 +1,53 @@
+# Extend the motion segment to 20-75 s; retain 1 m NDT resolution and the original initialization threshold.
+Configor:
+  DataStream:
+    IMUTopics:
+    - key: /rslidar_imu_data
+      value:
+        Type: SENSOR_IMU_G
+        Intrinsics: /opt/ikalibr_ws/src/ikalibr/config/imu-intri.yaml
+        AcceWeight: 17.68
+        GyroWeight: 57.66
+    RadarTopics: []
+    LiDARTopics:
+    - key: /rslidar_points
+      value:
+        Type: RSLIDAR_POINTS
+        Weight: 100.0
+    CameraTopics: []
+    RGBDTopics: []
+    ReferIMU: /rslidar_imu_data
+    BagPath: /datasets/mapping.bag
+    BeginTime: 20
+    Duration: 55
+    OutputPath: /results/robosense-mapping-extended
+  Prior:
+    GravityNorm: 9.8
+    SpatTempPrioriPath: ''
+    OptTemporalParams: true
+    TimeOffsetPadding: 0.05
+    ReadoutTimePadding: 0.04
+    MapDownSample: 0.1
+    KnotTimeDist:
+      SO3Spline: 0.05
+      ScaleSpline: 0.05
+    NDTLiDAROdometer:
+      Resolution: 1.0
+      KeyFrameDownSample: 0.1
+    LiDARDataAssociate:
+      MapDownSample: 0.1
+      PointToSurfelMax: 0.1
+      PlanarityMin: 0.6
+    CauchyLossForRadarFactor: 0.1
+    CauchyLossForLiDARFactor: 0.5
+    CauchyLossForCameraFactor: 1.0
+  Preference:
+    UseCudaInSolving: false
+    Outputs:
+    - BSplines
+    - AlignedInertialMes
+    - LiDARMaps
+    OutputDataFormat: YAML
+    ThreadsToUse: 4
+    SplineScaleInViewer: 3.0
+    CoordSScaleInViewer: 0.3

@@ -1,0 +1,63 @@
+Configor:
+  DataStream:
+    IMUTopics:
+    - key: /imu1/data
+      value:
+        Type: SENSOR_IMU
+        Intrinsics: /opt/ikalibr_ws/src/ikalibr/data/li-calib/Court-01/imu1-intri.yaml
+        AcceWeight: 17.68
+        GyroWeight: 57.66
+    - key: /imu2/data
+      value:
+        Type: SENSOR_IMU
+        Intrinsics: /opt/ikalibr_ws/src/ikalibr/data/li-calib/Court-01/imu2-intri.yaml
+        AcceWeight: 17.68
+        GyroWeight: 57.66
+    - key: /imu3/data
+      value:
+        Type: SENSOR_IMU
+        Intrinsics: /opt/ikalibr_ws/src/ikalibr/data/li-calib/Court-01/imu3-intri.yaml
+        AcceWeight: 17.68
+        GyroWeight: 57.66
+    RadarTopics: []
+    LiDARTopics:
+    - key: /velodyne_packets
+      value:
+        Type: VLP_16_PACKET
+        Weight: 100.0
+    CameraTopics: []
+    RGBDTopics: []
+    ReferIMU: /imu1/data
+    BagPath: /datasets/LI-CALIB/Court-01.bag
+    BeginTime: 5
+    Duration: 23
+    OutputPath: /results/li-court-01
+  Prior:
+    GravityNorm: 9.8
+    SpatTempPrioriPath: ''
+    OptTemporalParams: true
+    TimeOffsetPadding: 0.05
+    ReadoutTimePadding: 0.04
+    MapDownSample: 0.1
+    KnotTimeDist:
+      SO3Spline: 0.05
+      ScaleSpline: 0.05
+    NDTLiDAROdometer:
+      Resolution: 0.5
+      KeyFrameDownSample: 0.1
+    LiDARDataAssociate:
+      MapDownSample: 0.1
+      PointToSurfelMax: 0.1
+      PlanarityMin: 0.6
+    CauchyLossForRadarFactor: 0.1
+    CauchyLossForLiDARFactor: 0.5
+    CauchyLossForCameraFactor: 1.0
+  Preference:
+    UseCudaInSolving: false
+    Outputs:
+    - BSplines
+    - AlignedInertialMes
+    OutputDataFormat: YAML
+    ThreadsToUse: 4
+    SplineScaleInViewer: 3.0
+    CoordSScaleInViewer: 0.3

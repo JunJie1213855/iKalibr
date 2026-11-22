@@ -1,0 +1,135 @@
+iKalibr / ROS Noetic 本地镜像
+
+项目位置：/home/ros/lib/iKalibr
+目标镜像：ikalibr:noetic-local
+基础镜像：本机已有 osrf/ros:noetic-desktop-full；所有 docker run 使用 --pull=never。
+构建容器：ikalibr-noetic-builder，CPU 配额 2、内存上限 6 GiB、不额外使用 swap。
+编译并行度：依赖最多 2，iKalibr 主程序使用 1（模板编译内存较高）；
+禁用 Unity Build，减少单个编译单元的内存压力。
+
+构建或继续构建（不执行任何标定）：
+  cd /home/ros/lib/iKalibr
+  ./docker/build-image.sh
+
+依赖来源：
+  上游 CTraj/veta/tiny-viewer 链接目前不可用。
+  使用 https://github.com/TQK123/iKalibr-note
+  提交 d4349fa1794d6550873722240945ad9705bd162d 中保存的源码。
+  该备份的 iKalibr src/ 和 include/ 与当前项目内容一致。
+  ufomap 固定 b9de35475d78ec9523493f7e7383cce48030ab9f。
+  opengv 固定 91f4b19c73450833a40e463ad3648aae80b3a7f3。
+  Ceres 2.2.0、Eigen 3.4.0、Sophus 1.22.10、Pangolin v0.8、
+  spdlog v1.12.0、magic_enum v0.9.6；编译脚本见 compile.sh。
+  构建需要下载 apt 软件包和上述源码，但不会拉取 Docker 镜像。
+
+运行约定：
+  数据集挂载到 /datasets，只读。
+  配置挂载到 /configs，只读。
+  输出挂载到 /results，默认宿主机路径：
+    /home/ros/dataset/calib/ikalibr-results/<配置名>/
+  运行限制为 4 个 CPU、12 GiB 内存、无额外 swap，并设置求解线程数 4。
+  默认 calibrate 不需要宿主机 X11、不需要 xhost、不需要 GPU；使用 Xvfb + Mesa 软件渲染。
+  calibrate-gui 使用桌面 X11/XWayland 和临时 xauth cookie 显示原生查看器，
+  不执行 xhost +；仍使用 Mesa 软件渲染及相同的 CPU/内存限制。
+  容器源码增加一个 IKALIBR_AUTO_CLOSE_VIEWER 环境变量开关，
+  用于保存完结果后自动关闭不可见的 viewer；另外去除 Feature::Raw/
+  Undistorted 两个函数声明的 inline（其实现位于 .cpp，支持非 Unity 构建）。
+  optical_flow_trace.cpp 和 visual_distortion.cpp 补充缺失的显式头文件引用。
+  三个事件相机初始化 .cpp 补充其独立编译需要的 OpenCV 和类型头文件。
+  彩色点云、重力和线速度可视化 .cpp 显式包含 core/visual_distortion.h。
+  event_data_loader.cpp 显式包含 util/status.hpp。
+  宿主机算法源码未修改。
+  以当前用户 UID/GID 写结果。
+  ROS_HOME 使用按用户区分的可写临时目录，ROS 日志保存在各结果目录的
+  ros-log/ 下；入口脚本预先创建并检查目录权限。
+  batch launch 将标定节点标记为 required，节点退出后自动结束 roslaunch。
+  所有容器源码补丁均保持原始版权声明位于文件开头；不禁用版权检查。
+  初始化日志增加 [INIT-DIAG]：NDT 收敛状态、点数、fitness、帧间位姿变化，
+  以及旋转初始化矩阵奇异值和原有阈值；不改变求解算法或通过判据。
+  以下命令由用户自行执行，构建脚本不会运行它们。
+
+LI-CALIB（每个序列使用仓库中对应序列的配置与 IMU 内参）：
+  cd /home/ros/lib/iKalibr
+  ./docker/run.sh calibrate li-court-01
+  ./docker/run.sh calibrate li-court-02
+  ./docker/run.sh calibrate li-court-03
+  ./docker/run.sh calibrate li-garage-01
+
+桌面实时可视化（在宿主机图形桌面终端执行，无需重新构建镜像）：
+  ./docker/run.sh calibrate-gui li-court-01
+  需要 DISPLAY、可用的 /tmp/.X11-unix 和当前桌面的 xauth cookie。
+  求解完成后查看器保持打开；按窗口提示 Ctrl+S 保存场景，关闭查看器后退出。
+  四个分区有黑色细边框及左上角标题：Sensors / extrinsics（传感器外参）、
+  Continuous-time trajectory（轨迹）、Map（地图）、Data association（数据关联）。
+  标题固定在屏幕坐标，不随三维视角旋转，截图也会保留。
+  这是重新标定并显示过程，不是打开已有结果；由用户自行执行。
+
+对已完成的 LiDAR 标定结果绘图（不重新标定）：
+  PYTHONNOUSERSITE=1 OPENBLAS_NUM_THREADS=1 python3 docker/plot-results.py /home/ros/dataset/calib/ikalibr-results/li-court-01
+  图片保存在该结果目录 visualizations/ 中。脚本需要 numpy、matplotlib、PyYAML。
+
+iKalibr 数据：激光雷达 + 雷达 + IMU（不包含相机，不需要 SfM）：
+  ./docker/run.sh calibrate ikalibr-data-lidar-radar-imu
+  ./docker/run.sh calibrate ikalibr-data-1-lidar-radar-imu
+
+iKalibr 数据：包含相机的完整配置，需要分三步运行。
+第一次会导出图像和 SfM 命令，然后提示先完成 SfM，退出码为非零属于预期。
+  ./docker/run.sh calibrate ikalibr-data-full
+  ./docker/run.sh sfm ikalibr-data-full
+  ./docker/run.sh calibrate ikalibr-data-full
+
+另一个 bag 同样运行：
+  ./docker/run.sh calibrate ikalibr-data-1-full
+  ./docker/run.sh sfm ikalibr-data-1-full
+  ./docker/run.sh calibrate ikalibr-data-1-full
+
+ikalibr-data.bag 的随附 readme 指出 radar_1 观测质量差，因此该 bag 的配置
+排除了 radar_1；另一个 bag 保留两个雷达。两者消息名虽为 RadarScan，
+但内嵌消息定义及 MD5 对应 RadarScanCustom，配置使用 AWR1843BOOST_CUSTOM。
+两路相机按原数据集说明均使用全局快门模式。
+
+VECtor：原始相机图像 + IMU，也需要三步：
+  ./docker/run.sh calibrate vector-small
+  ./docker/run.sh sfm vector-small
+  ./docker/run.sh calibrate vector-small
+
+  ./docker/run.sh calibrate vector-large
+  ./docker/run.sh sfm vector-large
+  ./docker/run.sh calibrate vector-large
+
+VECtor 内参来自官方标定配置：
+  https://star-datasets.github.io/vector/calibration/
+  https://star-datasets.github.io/vector/assets/zip/small_scale_camera_imu_extrinsic_config.zip
+  https://star-datasets.github.io/vector/assets/zip/large_scale_camera_imu_extrinsic_config.zip
+官方原始配置副本与转换后的 iKalibr 内参在 calib-configs/intrinsics/。
+这些 bag 的图像是 image_mono 原始畸变图像，不使用仓库内零畸变的
+image_mono_undistort 示例参数。采用位置样条路线，SfM 使用 CPU COLMAP。
+SfM 能否完成以及最终标定精度取决于图像匹配、运动激励和数据质量，
+尚未实际运行标定，不能将这些配置视为已验证的标定结果。
+观测权重沿用仓库配置或模板初值，后续可依据实际噪声水平调整。
+
+不纳入上述时空标定命令的数据：
+  TUM GS-RS/：当前为空。
+  VECtor/imu_intrinsic_data_5hrs_recordings.bag：静止 Allan 方差噪声数据，
+    不适用于 iKalibr 多位置静态内参标定或多传感器时空标定。
+  VECtor/rgbd_camera_extrinsic_data/：离散标定图片，不是同步的 RGB-D/IMU bag。
+  VECtor/camera_lidar_extrinsic_raw_data.zip：外参专用原始归档，尚未解包或转换。
+    不能直接作为 rosbag 交给 iKalibr。
+
+结果与故障检查：
+  成功结果为 <输出目录>/ikalibr_param.yaml。
+  日志为 <输出目录>/run-YYYYmmdd-HHMMSS.log。
+  上游程序会捕获异常并返回 0；run.sh 同时检查完成标记和参数文件，
+  避免把单纯的退出码 0 当作标定成功。
+  含相机的首次导出阶段没有最终参数文件，应先执行 sfm，再重复 calibrate。
+  run-sfm.py 从导出的命令中只选择 COLMAP 路线，避免误执行 GUI/GLOMAP 分支。
+
+可覆盖环境变量：
+  IKALIBR_IMAGE、IKALIBR_DATASETS、IKALIBR_RESULTS。
+  例如：
+  IKALIBR_RESULTS=/home/ros/ikalibr-results ./docker/run.sh calibrate li-court-03
+
+只进入容器，不执行标定：
+  ./docker/run.sh shell li-court-03
+
+构建与检查日志保存在 docker/logs/（Git 忽略）。

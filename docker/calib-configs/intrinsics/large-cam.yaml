@@ -1,0 +1,19 @@
+cam0: # left regular camera
+  camera_model: pinhole
+  intrinsics: [886.191073, 886.591633, 610.578911, 514.592710]
+  distortion_model: radtan
+  distortion_coeffs: [-0.315760, 0.104955, 0.000320, -0.000156]
+  rostopic: /camera/left/image_mono
+  resolution: [1224, 1024]
+cam1: # right regular camera
+  camera_model: pinhole
+  intrinsics: [887.804282, 888.048150, 616.177573, 514.712952]
+  distortion_model: radtan
+  distortion_coeffs: [-0.311523, 0.096410, 0.000623, -0.000375]
+  rostopic: /camera/right/image_mono
+  resolution: [1224, 1024]
+  T_cn_cnm1:
+  - [ 0.9997, 0.0225, -0.0074, -0.1714]
+  - [-0.0225, 0.9997, -0.0016,  0.0035]
+  - [ 0.0074, 0.0018,  1.0000,  0.0036]
+  - [      0,      0,       0,  1.0000]

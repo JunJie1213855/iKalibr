@@ -1,0 +1,75 @@
+Configor:
+  DataStream:
+    IMUTopics:
+    - key: /livox_avia/imu
+      value:
+        Type: SENSOR_IMU_G
+        Intrinsics: /opt/ikalibr_ws/src/ikalibr/data/real-world/iKalibr-data-2024-06-25-16-42-32/livox-imu-intri.yaml
+        AcceWeight: 9.0
+        GyroWeight: 29.0
+    - key: /mti/imu
+      value:
+        Type: SENSOR_IMU
+        Intrinsics: /opt/ikalibr_ws/src/ikalibr/data/real-world/iKalibr-data-2024-06-25-16-42-32/mti-imu-intri.yaml
+        AcceWeight: 17.68
+        GyroWeight: 57.66
+    RadarTopics:
+    - key: /ti_mmwave/radar_0
+      value:
+        Type: AWR1843BOOST_CUSTOM
+        Weight: 10.0
+    LiDARTopics:
+    - key: /livox_avia/lidar
+      value:
+        Type: LIVOX_CUSTOM
+        Weight: 100.0
+    CameraTopics:
+    - key: /cam_gs/image_compressed
+      value:
+        Type: SENSOR_IMAGE_COMP_GS
+        Intrinsics: /opt/ikalibr_ws/src/ikalibr/data/real-world/cam-gs-intri.yaml
+        Weight: 50.0
+        TrackLengthMin: 10
+        ScaleSplineType: LIN_POS_SPLINE
+    - key: /cam_rs/image_compressed
+      value:
+        Type: SENSOR_IMAGE_COMP_GS
+        Intrinsics: /opt/ikalibr_ws/src/ikalibr/data/real-world/cam-rs-intri.yaml
+        Weight: 50.0
+        TrackLengthMin: 10
+        ScaleSplineType: LIN_POS_SPLINE
+    RGBDTopics: []
+    ReferIMU: /mti/imu
+    BagPath: /datasets/ikalibr/ikalibr-data.bag
+    BeginTime: 8
+    Duration: 62
+    OutputPath: /results/ikalibr-data-full
+  Prior:
+    GravityNorm: 9.8
+    SpatTempPrioriPath: ''
+    OptTemporalParams: true
+    TimeOffsetPadding: 0.15
+    ReadoutTimePadding: 0.01
+    MapDownSample: 0.1
+    KnotTimeDist:
+      SO3Spline: 0.05
+      ScaleSpline: 0.05
+    NDTLiDAROdometer:
+      Resolution: 0.5
+      KeyFrameDownSample: 0.1
+    LiDARDataAssociate:
+      MapDownSample: 0.1
+      PointToSurfelMax: 0.1
+      PlanarityMin: 0.6
+    CauchyLossForRadarFactor: 0.1
+    CauchyLossForLiDARFactor: 0.5
+    CauchyLossForCameraFactor: 1.0
+  Preference:
+    UseCudaInSolving: false
+    Outputs:
+    - BSplines
+    - AlignedInertialMes
+    OutputDataFormat: YAML
+    ThreadsToUse: 4
+    SplineScaleInViewer: 3.0
+    CoordSScaleInViewer: 0.3

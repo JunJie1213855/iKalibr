@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="config_path"/>
+  <node pkg="ikalibr" type="ikalibr_prog" name="ikalibr_prog" output="screen" required="true">
+    <param name="config_path" value="$(arg config_path)" type="string"/>
+  </node>
+</launch>
