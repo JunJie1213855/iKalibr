@@ -10,7 +10,7 @@ mode=${1:-help}
 name=${2:-}
 
 if [[ "$mode" == help || -z "$name" ]]; then
-  echo "Usage: $0 {calibrate|calibrate-gui|sfm|shell} CONFIG_NAME"
+  echo "Usage: $0 {calibrate|calibrate-gui|sfm|sfm-resume|shell} CONFIG_NAME"
   echo 'Configurations:'
   find "$root/docker/calib-configs" -maxdepth 1 -name '*.yaml' -printf '  %f\n' | sort
   exit 0
@@ -66,7 +66,10 @@ case "$mode" in
     ' bash "$name" "$mode"
     ;;
   sfm)
-    docker run "${args[@]}" "$image" python3 /helpers/run-sfm.py "/results/$name"
+    docker run "${args[@]}" -e "IKALIBR_SFM_MODE=${IKALIBR_SFM_MODE:-fast}" "$image" python3 /helpers/run-sfm.py "/results/$name"
+    ;;
+  sfm-resume)
+    docker run "${args[@]}" "$image" python3 /helpers/run-sfm.py "/results/$name" --resume-mapper
     ;;
   shell)
     docker run -it "${args[@]}" "$image" bash
